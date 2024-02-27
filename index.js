@@ -10,21 +10,21 @@ import testRouter from "./routes/index.js"; // 引入路由
 import chatRouter from "./routes/chat.js"; // 引入路由
 import regRouter from "./routes/reg.js"; // 引入路由
 
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 
 
-// import { createServer } from 'http'
-// import { Server } from 'socket.io'
 
 //建立web server物件
 const app = express();
 
 //sockie io
-// const server = createServer(app)
-// const io = new Server(server, {
-//   cors: {
-//     origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-//   },
-// })
+const server = createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  },
+})
 
 
 // top-level middlewares // 依檔頭Content-Type來決定是否解析
@@ -58,6 +58,38 @@ app.use("/chat", chatRouter);
 
 //註冊路由
 app.use("/reg", regRouter);
+
+//1to1
+io.on('connection', (socket) => {
+  console.log('a user connected')
+  // socket.emit('test', 'hello')
+
+  // socket.on('client', (arg) => {
+  //   console.log('server recieved: ', arg)
+  // })
+  // socket.on('getUser', (user) => {
+  //   if (user === 'a') {
+  //     socket.join('room a')
+  //     io.to('room a').emit('room', 'room a', new Date().toString())
+  //   } else {
+  //     socket.join('room b')
+  //     io.to('room b').emit('room', 'room b', new Date().toString())
+  //   }
+  // })
+  socket.emit('connection', 'success')
+  socket.on('user message', (userId, receiverId, message) => {
+    console.log('user message: ', message)
+    socket.broadcast.emit('room', userId, message)
+  })
+  // socket.join('room')
+  // socket.on('user message', (userId, message)=>{
+  //   console.log(userId, message)
+  //   io.to('room').emit('room', userId, message)
+  // })
+
+  // io.to('room').emit('room', 'server', 'room opened')
+})
+
 
 //登入 表單資料
 app.post("/login-jwt", async (req, res) => {
@@ -161,7 +193,7 @@ app.use((req, res) => {
 const port = process.env.WEB_PORT || 3003; // 如果沒設定就使用3003
 
 // 伺服器啟動
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`express server ${port}`)
 })
 
