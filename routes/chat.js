@@ -58,4 +58,18 @@ router.get("/rooms", async (req, res) => {
   }
 });
 
+// 詳細頁
+router.get('/api/detail/:room_id', async (req, res) => {
+  const room_id = +req.params.room_id
+  const sql = `SELECT * 
+  FROM room
+  WHERE room_id = ? `
+  const [rows] = await db.query(sql, [room_id])
+  if (rows.length) {
+    res.json(rows[0])
+  } else {
+    res.json({})
+  }
+})
+
 export default router;
