@@ -62,7 +62,8 @@ router.get("/rooms", async (req, res) => {
 router.get('/api/detail/:room_id', async (req, res) => {
   const room_id = +req.params.room_id
   const sql = `SELECT * 
-  FROM room
+  FROM room m
+  left join user u on m.user_id=u.user_id
   WHERE room_id = ? `
   const [rows] = await db.query(sql, [room_id])
   if (rows.length) {
