@@ -1,11 +1,16 @@
 // 引入express
 import express from "express";
 import cors from "cors";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 import upload from "./utils/upload-imgs.js"; // 上傳圖片
 import db from "./utils/connect-mysql.js"; // 資料庫
 import testRouter from "./routes/index.js"; // 引入路由
 import chatRouter from "./routes/chat.js"; // 引入路由
 import regRouter from "./routes/reg.js"; // 引入路由
+
+
 
 // import { createServer } from 'http'
 // import { Server } from 'socket.io'
@@ -53,6 +58,86 @@ app.use("/chat", chatRouter);
 
 //註冊路由
 app.use("/reg", regRouter);
+
+//登入 表單資料
+app.post("/login-jwt", async (req, res) => {
+  const output = {
+    success: false,
+    code: 0,
+    postData: req.body,
+    user_id: 0,
+    account: "",
+    user_name: "",
+    photo:"",
+    token: ""
+  };
+  if (!req.body.account || !req.body.password) {
+    // 資料不足
+    output.code = 410;
+    return res.json(output);
+  }
+  const sql = "SELECT * FROM user WHERE account=?";
+  const [rows] = await db.query(sql, [req.body.account]);
+  if (!rows.length) {
+    // 帳號是錯的
+    output.code = 400;
+    return res.json(output);
+  }
+  const row = rows[0];
+  const pass = await bcrypt.compare(req.body.password, row.password);
+  if (!pass) {
+    // 密碼是錯的
+    output.code = 420;
+    return res.json(output);
+  }
+  output.code = 200;
+  output.success = true;
+  output.user_id = row.user_id;
+  output.account = row.account;
+  output.user_name = row.user_name;
+  output.photo = row.photo;
+  output.token = jwt.sign(
+    { user_id: row.user_id, account: row.account },
+    process.env.JWT_SECRET
+  );
+  res.json(output);
+});
+
+
+
+//1227-1
+app.get("/profile", async (req, res) => {
+  // res.locals.jwt: {id, account}
+  const output = {
+    success: false,
+    error: "",
+    data: {},
+  };
+  if(!res.locals.jwt?.user_id){
+    output.error = "沒有權限";
+    return res.json(output);
+  }
+  const [rows] = await db.query("SELECT `user_id`, `account`, `user_name` FROM `members` WHERE user_id=?", [res.locals.jwt.user_id]);
+  if(!rows.length){
+    output.error = "沒有這個會員";
+    return res.json(output);
+  }
+  output.success = true;
+  output.data = rows[0];
+  res.json(output);
+});
+
+
+
+//登出
+
+app.get("/logout", async (req, res) => {
+  //刪掉admin的屬性 
+  delete req.session.admin;
+  res.redirect('/');
+});
+
+
 
 
 // 上傳單ㄧ照片的路由

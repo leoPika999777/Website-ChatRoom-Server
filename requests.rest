@@ -1,0 +1,30 @@
+
+Get http://localhost:3002/try-qs?a=15&b=35
+
+
+### 分隔
+POST http://localhost:3002/try-post
+Content-Type: application/x-www-form-urlencoded
+
+
+
+### 用戶端可能送的是json
+
+POST http://localhost:3002/try-post
+Content-Type: application/json
+
+
+
+### 測試 JWT 登入 - 確定是正確的
+POST http://localhost:3002/login-jwt
+
+Content-Type: application/json
+
+{"email": "aaa@qq.com", "password": "123456"}
+
+### 測試 JWT 登入 - 確定是錯誤的
+POST http://localhost:3002/login-jwt
+
+Content-Type: application/json
+
+{"email": "aaa@qq.com", "password": "1234567"}
